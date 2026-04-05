@@ -10,6 +10,7 @@ import { Button } from '../Button';
 import { DimensionConfiguration } from '../DimensionConfiguration';
 import { LanguageConfiguration } from '../LanguageConfiguration';
 import { ToggleButton } from '../ToggleButton';
+import { ApiConfiguration } from '../ApiConfiguration';
 
 export function Configuration(){
 
@@ -73,6 +74,8 @@ export function Configuration(){
                         <h4 className={styles.title}>{t('advanced_mode')}</h4>
                         <ToggleButton ativo={isAdvancedMode} onChange={setIsAdvancedMode} />
                     </div>
+
+                    <ApiConfiguration/>
                 </div>
             )}
         </div>

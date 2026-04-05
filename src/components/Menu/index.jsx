@@ -17,28 +17,27 @@ import { converterJsonParaXml } from '../../utils/converterJsonParaXml';
 import { converterXmlParaJson } from '../../utils/converterXmlParaJson';
 import { converterJsonParaJson } from '../../utils/converterJsonParaJson';
 import { convertMap } from '../../utils/converter';
+import { uploadMapa } from '../../utils/apiService';
+import { generatePreviewBlob } from '../../utils/previewGenerator';
+import { buildFileName } from '../../utils/fileNaming';
+import { useSpriteSheetMap } from '../../hook/useSpriteSheetMap';
+import { spritesMap } from '../../SpritesMap';
 
 export function Menu(){
     const {t} = useTranslation();
 
-    const download = (fileFormat, fileString) => {
-
-        const type = fileFormat === 'json' ? 'application/json' : 'application/xml'
-
-        const blob = new Blob([fileString], { type: type});
-
-        const url = URL.createObjectURL(blob);
-
+    const download = (fileName, fileFormat, fileString) => {
+        const type = fileFormat === 'json' ? 'application/json' : 'application/xml';
+        const blob = new Blob([fileString], { type });
+        const url  = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `map.${fileFormat}`;
-
+        link.download = fileName;
         document.body.appendChild(link);
         link.click();
-
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-    }
+    };
 
     const [isModal, setModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
@@ -52,22 +51,44 @@ export function Menu(){
         setModalTitle(title)
     }
 
-    const save = () => {
-        let fileString = ''
-        if(fileFormat == 'json'){
-            console.log('SALVANDO EM JSON')
-
+    const save = async () => {
+        let fileString = '';
+        if (fileFormat === 'json') {
             const e3Map = adaptarAppJsonParaE3Map(tilemap);
             const map = convertMap(e3Map);
-            fileString = JSON.stringify(map)
-        }
-        else{
-            console.log('SALVANDO EM XML');
+            fileString = JSON.stringify(map);
+        } else {
             fileString = converterJsonParaXml(tilemap);
         }
-        setModal(false)
-        download(fileFormat, fileString);
-    }
+
+        const fileName = buildFileName(apiSettings, mapName, fileFormat);
+
+        setModal(false);
+        download(fileName, fileFormat, fileString);
+
+        if (apiSettings.conectado && apiSettings.email && apiSettings.senha) {
+            setUploadStatus('uploading');
+            try {
+                const previewBlob = await generatePreviewBlob(tilemap, spriteSheetMap);
+                const previewFileName = fileName.replace(/\.[^.]+$/, '.png');
+                await uploadMapa(
+                    apiSettings.url,
+                    apiSettings.email,
+                    apiSettings.senha,
+                    mapName || 'Mapa sem nome',
+                    fileString,
+                    fileFormat,
+                    previewBlob,
+                    previewFileName
+                );
+                setUploadStatus('ok');
+            } catch (err) {
+                setUploadStatus('error');
+                console.error('[API] Erro ao enviar mapa:', err.message);
+            }
+            setTimeout(() => setUploadStatus(null), 4000);
+        }
+    };
 
     const target = () => {
         setModal(false)
@@ -81,14 +102,20 @@ export function Menu(){
         }
     };
 
-    const { 
+    const {
         tilemap, setTilemap,
-        setSelectedSprite, 
-        setSelectedLayerSprite, 
+        setSelectedSprite,
+        setSelectedLayerSprite,
         setHistory, history,
-        isMenuOpen, setIsMenuOpen, setDisplacementSidebarMenu, 
-        setIsElementsOpen 
+        isMenuOpen, setIsMenuOpen, setDisplacementSidebarMenu,
+        setIsElementsOpen,
+        apiSettings,
+        mapName, setMapName,
     } = useTileMap();
+
+    const [uploadStatus, setUploadStatus] = useState(null);
+
+    const spriteSheetMap = useSpriteSheetMap(spritesMap);
 
     const handleMenuOpen = () => { setIsMenuOpen(prev => !prev); }
 
@@ -149,7 +176,7 @@ export function Menu(){
             onClick={handleMenuOpen}
             setDisplacementSidebar={setDisplacementSidebarMenu}
         >   
-            <Modal 
+            <Modal
                 active={isModal}
                 setActive={setModal}
                 title={modalTitle}
@@ -159,11 +186,32 @@ export function Menu(){
                 <div className={styles.contentModal}>
                 {option === 'save' ? (
                     <div>
-                        <h2 className={styles.titleModal}> Qual formato deseja salvar o projeto em andamento? </h2>
+                        <h2 className={styles.titleModal}>{t('save_message')}</h2>
+                        <div style={{ marginBottom: '8px' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '4px' }}>
+                                {t('map_name')}
+                            </label>
+                            <input
+                                type="text"
+                                value={mapName}
+                                onChange={e => setMapName(e.target.value)}
+                                placeholder={t('map_name')}
+                                className={styles.selectTile}
+                            />
+                        </div>
                         <select onChange={(e) => setFileFormat(e.target.value)} className={styles.selectTile}>
-                            <option value="json" selected>JSON</option>
+                            <option value="json">JSON</option>
                             <option value="xml">XML</option>
                         </select>
+                        {uploadStatus === 'uploading' && (
+                            <p style={{ fontSize: '0.8rem', color: '#888', marginTop: '6px' }}>{t('api_connecting')}</p>
+                        )}
+                        {uploadStatus === 'ok' && (
+                            <p style={{ fontSize: '0.8rem', color: '#86efac', marginTop: '6px' }}>✔ {t('api_upload_success')}</p>
+                        )}
+                        {uploadStatus === 'error' && (
+                            <p style={{ fontSize: '0.8rem', color: '#fca5a5', marginTop: '6px' }}>✖ {t('api_upload_error')}</p>
+                        )}
                     </div>
                 ) : (
                     <h2 className={styles.titleModal}>Deseja iniciar um novo mapa?</h2>

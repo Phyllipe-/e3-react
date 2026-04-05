@@ -108,5 +108,17 @@
     "plastic": "Plástico",
     "brick": "Tijolo",
     "wall_glass": "Vidro",
-    "stair": "Escada"
+    "stair": "Escada",
+    "api_settings": "Configurações da API",
+    "api_url": "URL da API",
+    "api_email": "E-mail",
+    "api_password": "Senha",
+    "api_save_connect": "Salvar e Conectar",
+    "api_connecting": "Conectando…",
+    "api_connected": "Conectado",
+    "api_connected_as": "Conectado como",
+    "api_fill_fields": "Preencha e-mail e senha.",
+    "api_upload_success": "Mapa salvo na API com sucesso!",
+    "api_upload_error": "Erro ao enviar mapa para a API.",
+    "map_name": "Nome do mapa"
 }
