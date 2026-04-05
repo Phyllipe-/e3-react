@@ -1,8 +1,20 @@
-import { 
-    createContext, 
-    useContext, 
-    useState 
+import {
+    createContext,
+    useContext,
+    useState,
+    useEffect
 } from 'react';
+
+const LS_API = "e3_api_settings";
+const LS_MAP_NAME = "e3_map_name";
+
+function loadApiSettings() {
+    try {
+        const saved = localStorage.getItem(LS_API);
+        if (saved) return JSON.parse(saved);
+    } catch (_) {}
+    return { url: "http://127.0.0.1:5000/api", email: "", senha: "", conectado: false, nomeUsuario: "" };
+}
 
 const TileMapContext = createContext();
 
@@ -78,9 +90,24 @@ export function TileMapProvider({ children }) {
     ] = useState(false);
 
     const [
-        hoverCell, 
+        hoverCell,
         setHoverCell
     ] = useState(null);
+
+    const [apiSettings, setApiSettingsState] = useState(loadApiSettings);
+    const [mapName, setMapName] = useState(
+        () => localStorage.getItem(LS_MAP_NAME) || ""
+    );
+
+    const setApiSettings = (value) => {
+        const next = typeof value === "function" ? value(apiSettings) : value;
+        setApiSettingsState(next);
+        try { localStorage.setItem(LS_API, JSON.stringify(next)); } catch (_) {}
+    };
+
+    useEffect(() => {
+        try { localStorage.setItem(LS_MAP_NAME, mapName); } catch (_) {}
+    }, [mapName]);
 
     const [
         tilemap, 
@@ -175,8 +202,12 @@ export function TileMapProvider({ children }) {
                 setHoverCell,
                 history, 
                 setHistory,
-                tilemap, 
+                tilemap,
                 setTilemap,
+                apiSettings,
+                setApiSettings,
+                mapName,
+                setMapName,
             }
         }>
             {children}

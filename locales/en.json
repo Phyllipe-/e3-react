@@ -108,5 +108,17 @@
     "plastic": "Plastic",
     "brick": "Brick",
     "wall_glass": "Glass",
-    "stair": "Stair"
+    "stair": "Stair",
+    "api_settings": "API Settings",
+    "api_url": "API URL",
+    "api_email": "Email",
+    "api_password": "Password",
+    "api_save_connect": "Save & Connect",
+    "api_connecting": "Connecting…",
+    "api_connected": "Connected",
+    "api_connected_as": "Connected as",
+    "api_fill_fields": "Please fill in email and password.",
+    "api_upload_success": "Map saved to API successfully!",
+    "api_upload_error": "Error sending map to API.",
+    "map_name": "Map name"
 }
