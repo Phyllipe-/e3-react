@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTileMap } from "../../contexts/TileMapContext";
-import { login } from "../../utils/apiService";
+import { login, getToken } from "../../utils/apiService";
 import styles from "./ApiConfiguration.module.css";
 
 export function ApiConfiguration() {
@@ -17,13 +17,25 @@ export function ApiConfiguration() {
     );
     const [loading,    setLoading]    = useState(false);
 
+    // Reflect token presence when panel opens
+    useEffect(() => {
+        if (getToken() && !apiSettings.conectado) {
+            setApiSettings(prev => ({ ...prev, conectado: true }));
+        }
+        setStatus(apiSettings.conectado || getToken()
+            ? { tipo: "ok", msg: apiSettings.nomeUsuario ? `${t("api_connected_as")} ${apiSettings.nomeUsuario}` : t("api_connected") }
+            : null
+        );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleSalvar = async () => {
         if (!localEmail || !localSenha) {
             setStatus({ tipo: "error", msg: t("api_fill_fields") });
             return;
         }
 
-        const url = localUrl.trim().replace(/\/$/, "") || "http://127.0.0.1:5000/api";
+        const url = localUrl.trim().replace(/\/$/, "") || "https://api.omaproject.com.br/api";
 
         setLoading(true);
         setStatus(null);
@@ -59,7 +71,7 @@ export function ApiConfiguration() {
                     type="text"
                     value={localUrl}
                     onChange={e => setLocalUrl(e.target.value)}
-                    placeholder="http://127.0.0.1:5000/api"
+                    placeholder="https://api.omaproject.com.br/api"
                 />
             </div>
 

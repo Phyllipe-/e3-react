@@ -4,6 +4,7 @@ import {
     useState,
     useEffect
 } from 'react';
+import { getToken, login } from '../utils/apiService';
 
 const LS_API = "e3_api_settings";
 const LS_MAP_NAME = "e3_map_name";
@@ -13,7 +14,7 @@ function loadApiSettings() {
         const saved = localStorage.getItem(LS_API);
         if (saved) return JSON.parse(saved);
     } catch (_) {}
-    return { url: "http://127.0.0.1:5000/api", email: "", senha: "", conectado: false, nomeUsuario: "" };
+    return { url: "https://api.omaproject.com.br/api", email: "", senha: "", conectado: false, nomeUsuario: "" };
 }
 
 const TileMapContext = createContext();
@@ -98,6 +99,7 @@ export function TileMapProvider({ children }) {
     const [mapName, setMapName] = useState(
         () => localStorage.getItem(LS_MAP_NAME) || ""
     );
+    const [editMapId, setEditMapId] = useState(null);
 
     const setApiSettings = (value) => {
         const next = typeof value === "function" ? value(apiSettings) : value;
@@ -108,6 +110,29 @@ export function TileMapProvider({ children }) {
     useEffect(() => {
         try { localStorage.setItem(LS_MAP_NAME, mapName); } catch (_) {}
     }, [mapName]);
+
+    // Auto-connect on startup: if credentials are saved and no token exists, login silently
+    useEffect(() => {
+        const { url, email, senha, conectado } = apiSettings;
+        if (!email || !senha) return;
+        if (getToken()) {
+            if (!conectado) setApiSettings(prev => ({ ...prev, conectado: true }));
+            return;
+        }
+        login(url, email, senha)
+            .then(data => {
+                setApiSettings(prev => ({
+                    ...prev,
+                    conectado:   true,
+                    nomeUsuario: data.usuario?.nome  ?? prev.nomeUsuario,
+                    idUsuario:   data.usuario?.id_usuario ?? prev.idUsuario,
+                }));
+            })
+            .catch(() => {
+                // Silently ignore — user will see "not connected" in ApiConfiguration
+            });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const [
         tilemap, 
@@ -208,6 +233,8 @@ export function TileMapProvider({ children }) {
                 setApiSettings,
                 mapName,
                 setMapName,
+                editMapId,
+                setEditMapId,
             }
         }>
             {children}
