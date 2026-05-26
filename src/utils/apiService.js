@@ -6,9 +6,9 @@
 
 const LS_TOKEN = "e3_api_token";
 
-function getToken()          { return localStorage.getItem(LS_TOKEN) || ""; }
-function saveToken(token)    { localStorage.setItem(LS_TOKEN, token); }
-function clearToken()        { localStorage.removeItem(LS_TOKEN); }
+export function getToken()       { return localStorage.getItem(LS_TOKEN) || ""; }
+       function saveToken(token) { localStorage.setItem(LS_TOKEN, token); }
+export function clearToken()     { localStorage.removeItem(LS_TOKEN); }
 
 /**
  * Faz login na api-om e armazena o JWT.
@@ -37,24 +37,17 @@ export async function login(apiUrl, email, senha) {
     return data;
 }
 
+function throwSessionExpired() {
+    clearToken();
+    throw new Error("Sessão expirada. Reconecte na configuração da API.");
+}
+
 /**
  * Envia o mapa para a api-om via POST /treinos/mapas.
- * Se receber 401, tenta renovar o token com as credenciais salvas e reenvia.
- *
- * @param {string} apiUrl      URL base
- * @param {string} email       Para renovação automática do token
- * @param {string} senha       Para renovação automática do token
- * @param {string} nomeMapa    Nome do mapa a registrar
- * @param {string} fileString  Conteúdo do arquivo (JSON ou XML)
- * @param {string} fileFormat  "json" | "xml"
- * @returns {Promise<object>}  Resposta da API
  */
-export async function uploadMapa(apiUrl, email, senha, nomeMapa, fileString, fileFormat, previewBlob = null, previewFileName = null) {
+export async function uploadMapa(apiUrl, nomeMapa, fileString, fileFormat, previewBlob = null, previewFileName = null) {
     const token = getToken();
-    if (!token) {
-        await login(apiUrl, email, senha);
-        return uploadMapa(apiUrl, email, senha, nomeMapa, fileString, fileFormat, previewBlob, previewFileName);
-    }
+    if (!token) throwSessionExpired();
 
     const tipo = fileFormat === "json" ? "application/json" : "text/xml";
     const blob = new Blob([fileString], { type: tipo });
@@ -73,11 +66,7 @@ export async function uploadMapa(apiUrl, email, senha, nomeMapa, fileString, fil
         body: form,
     });
 
-    if (response.status === 401) {
-        clearToken();
-        await login(apiUrl, email, senha);
-        return uploadMapa(apiUrl, email, senha, nomeMapa, fileString, fileFormat, previewBlob, previewFileName);
-    }
+    if (response.status === 401) throwSessionExpired();
 
     const data = await response.json();
 
@@ -85,5 +74,58 @@ export async function uploadMapa(apiUrl, email, senha, nomeMapa, fileString, fil
         throw new Error(data.erro ?? `Erro ${response.status} ao salvar mapa.`);
     }
 
+    return data;
+}
+
+/**
+ * Carrega o conteúdo do arquivo XML/JSON de um mapa existente.
+ */
+export async function carregarMapaArquivo(apiUrl, id) {
+    const token = getToken();
+    if (!token) throwSessionExpired();
+
+    const response = await fetch(`${apiUrl}/treinos/mapas/${id}/arquivo`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (response.status === 401) throwSessionExpired();
+
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.erro ?? `Erro ${response.status} ao carregar mapa.`);
+    }
+    return await response.text();
+}
+
+/**
+ * Atualiza o arquivo de um mapa existente via PATCH (modo edição do E3).
+ */
+export async function atualizarMapa(apiUrl, idMapa, nomeMapa, fileString, fileFormat, previewBlob = null, previewFileName = null) {
+    const token = getToken();
+    if (!token) throwSessionExpired();
+
+    const tipo = fileFormat === "json" ? "application/json" : "text/xml";
+    const blob = new Blob([fileString], { type: tipo });
+    const fileName = `${nomeMapa || "map"}.${fileFormat}`;
+
+    const form = new FormData();
+    form.append("arquivo_mapa", blob, fileName);
+    if (nomeMapa) form.append("nome_mapa", nomeMapa);
+    if (previewBlob) {
+        form.append("arquivo_preview", previewBlob, previewFileName || `${nomeMapa || "map"}_preview.png`);
+    }
+
+    const response = await fetch(`${apiUrl}/treinos/mapas/${idMapa}/arquivo`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+    });
+
+    if (response.status === 401) throwSessionExpired();
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.erro ?? `Erro ${response.status} ao atualizar mapa.`);
+    }
     return data;
 }

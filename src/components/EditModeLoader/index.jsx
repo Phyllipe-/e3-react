@@ -29,12 +29,12 @@ export function EditModeLoader() {
         localStorage.setItem(LS_TOKEN, token);
         setEditMapId(parseInt(id, 10));
 
-        const { url: apiUrl = 'https://api.omaproject.com.br/api', email = '', senha = '' } = (() => {
+        const { url: apiUrl = 'https://api.omaproject.com.br/api' } = (() => {
             try { return JSON.parse(localStorage.getItem(LS_API) || '{}'); }
             catch { return {}; }
         })();
 
-        carregarMapaArquivo(apiUrl, email, senha, id)
+        carregarMapaArquivo(apiUrl, id)
             .then(content => {
                 const trimmed = content.trim();
                 if (trimmed.startsWith('<')) {

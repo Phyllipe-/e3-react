@@ -14,6 +14,7 @@ import { Category } from './components/Category';
 import { Undo } from './components/Undo';
 import { LayerList } from './components/LayerList';
 import { View3D } from './components/View3D';
+import { EditModeLoader } from './components/EditModeLoader';
 
 export function App() {
     const [error, setError] = useState(null);
@@ -27,6 +28,7 @@ export function App() {
 
     return (
         <TileMapProvider>
+            <EditModeLoader/>
             <TilemapCanvas/>
             <Category/>
             <Menu/>

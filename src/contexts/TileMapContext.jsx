@@ -4,7 +4,7 @@ import {
     useState,
     useEffect
 } from 'react';
-import { getToken, login } from '../utils/apiService';
+import { getToken } from '../utils/apiService';
 
 const LS_API = "e3_api_settings";
 const LS_MAP_NAME = "e3_map_name";
@@ -12,9 +12,13 @@ const LS_MAP_NAME = "e3_map_name";
 function loadApiSettings() {
     try {
         const saved = localStorage.getItem(LS_API);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            delete parsed.senha; // never restore password from storage
+            return parsed;
+        }
     } catch (_) {}
-    return { url: "https://api.omaproject.com.br/api", email: "", senha: "", conectado: false, nomeUsuario: "" };
+    return { url: "https://api.omaproject.com.br/api", email: "", conectado: false, nomeUsuario: "" };
 }
 
 const TileMapContext = createContext();
@@ -104,33 +108,23 @@ export function TileMapProvider({ children }) {
     const setApiSettings = (value) => {
         const next = typeof value === "function" ? value(apiSettings) : value;
         setApiSettingsState(next);
-        try { localStorage.setItem(LS_API, JSON.stringify(next)); } catch (_) {}
+        // Persist without password — senha is kept only in React state (memory)
+        const { senha: _omit, ...toStore } = next;
+        try { localStorage.setItem(LS_API, JSON.stringify(toStore)); } catch (_) {}
     };
 
     useEffect(() => {
         try { localStorage.setItem(LS_MAP_NAME, mapName); } catch (_) {}
     }, [mapName]);
 
-    // Auto-connect on startup: if credentials are saved and no token exists, login silently
+    // Sync conectado flag with token presence on startup
     useEffect(() => {
-        const { url, email, senha, conectado } = apiSettings;
-        if (!email || !senha) return;
-        if (getToken()) {
-            if (!conectado) setApiSettings(prev => ({ ...prev, conectado: true }));
-            return;
+        const { conectado } = apiSettings;
+        if (getToken() && !conectado) {
+            setApiSettings(prev => ({ ...prev, conectado: true }));
+        } else if (!getToken() && conectado) {
+            setApiSettings(prev => ({ ...prev, conectado: false }));
         }
-        login(url, email, senha)
-            .then(data => {
-                setApiSettings(prev => ({
-                    ...prev,
-                    conectado:   true,
-                    nomeUsuario: data.usuario?.nome  ?? prev.nomeUsuario,
-                    idUsuario:   data.usuario?.id_usuario ?? prev.idUsuario,
-                }));
-            })
-            .catch(() => {
-                // Silently ignore — user will see "not connected" in ApiConfiguration
-            });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

@@ -17,7 +17,7 @@ import { converterJsonParaXml } from '../../utils/converterJsonParaXml';
 import { converterXmlParaJson } from '../../utils/converterXmlParaJson';
 import { converterJsonParaJson } from '../../utils/converterJsonParaJson';
 import { convertMap } from '../../utils/converter';
-import { uploadMapa } from '../../utils/apiService';
+import { uploadMapa, atualizarMapa } from '../../utils/apiService';
 import { generatePreviewBlob } from '../../utils/previewGenerator';
 import { buildFileName } from '../../utils/fileNaming';
 import { useSpriteSheetMap } from '../../hook/useSpriteSheetMap';
@@ -66,25 +66,38 @@ export function Menu(){
         setModal(false);
         download(fileName, fileFormat, fileString);
 
-        if (apiSettings.conectado && apiSettings.email && apiSettings.senha) {
+        if (apiSettings.conectado && apiSettings.email) {
             setUploadStatus('uploading');
             try {
                 const previewBlob = await generatePreviewBlob(tilemap, spriteSheetMap);
                 const previewFileName = fileName.replace(/\.[^.]+$/, '.png');
-                await uploadMapa(
-                    apiSettings.url,
-                    apiSettings.email,
-                    apiSettings.senha,
-                    mapName || 'Mapa sem nome',
-                    fileString,
-                    fileFormat,
-                    previewBlob,
-                    previewFileName
-                );
+
+                if (editMapId) {
+                    // Modo edição — atualiza mapa existente via PATCH
+                    await atualizarMapa(
+                        apiSettings.url,
+                        editMapId,
+                        mapName || 'Mapa sem nome',
+                        fileString,
+                        fileFormat,
+                        previewBlob,
+                        previewFileName
+                    );
+                } else {
+                    // Modo criação — cria novo mapa via POST
+                    await uploadMapa(
+                        apiSettings.url,
+                        mapName || 'Mapa sem nome',
+                        fileString,
+                        fileFormat,
+                        previewBlob,
+                        previewFileName
+                    );
+                }
                 setUploadStatus('ok');
             } catch (err) {
                 setUploadStatus('error');
-                console.error('[API] Erro ao enviar mapa:', err.message);
+                console.error('[API] Erro ao salvar mapa:', err.message);
             }
             setTimeout(() => setUploadStatus(null), 4000);
         }
@@ -111,6 +124,7 @@ export function Menu(){
         setIsElementsOpen,
         apiSettings,
         mapName, setMapName,
+        editMapId,
     } = useTileMap();
 
     const [uploadStatus, setUploadStatus] = useState(null);

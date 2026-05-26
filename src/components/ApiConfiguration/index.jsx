@@ -10,7 +10,7 @@ export function ApiConfiguration() {
 
     const [localUrl,   setLocalUrl]   = useState(apiSettings.url);
     const [localEmail, setLocalEmail] = useState(apiSettings.email);
-    const [localSenha, setLocalSenha] = useState(apiSettings.senha);
+    const [localSenha, setLocalSenha] = useState("");
 
     const [status,     setStatus]     = useState(
         apiSettings.conectado ? { tipo: "ok", msg: t("api_connected") } : null
@@ -45,7 +45,7 @@ export function ApiConfiguration() {
             setApiSettings({
                 url:        url,
                 email:      localEmail,
-                senha:      localSenha,
+                // senha stays only in React state (localSenha) — not persisted to localStorage
                 conectado:  true,
                 nomeUsuario: data.usuario.nome,
                 idUsuario:  data.usuario.id_usuario,
