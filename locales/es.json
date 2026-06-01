@@ -109,7 +109,7 @@
     "brick": "Ladrillo",
     "wall_glass": "Vidrio",
     "stair": "Escalera",
-    "api_settings": "Configuración de la API",
+    "api_settings": "Configuración de guardado",
     "api_url": "URL de la API",
     "api_email": "Correo electrónico",
     "api_password": "Contraseña",

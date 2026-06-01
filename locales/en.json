@@ -109,7 +109,7 @@
     "brick": "Brick",
     "wall_glass": "Glass",
     "stair": "Stair",
-    "api_settings": "API Settings",
+    "api_settings": "Map Save Settings",
     "api_url": "API URL",
     "api_email": "Email",
     "api_password": "Password",
