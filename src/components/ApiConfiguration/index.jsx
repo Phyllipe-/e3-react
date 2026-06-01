@@ -4,6 +4,9 @@ import { useTileMap } from "../../contexts/TileMapContext";
 import { login, getToken } from "../../utils/apiService";
 import styles from "./ApiConfiguration.module.css";
 
+const isDev = window.location.hostname === "localhost" ||
+              window.location.hostname === "127.0.0.1";
+
 export function ApiConfiguration() {
     const { t } = useTranslation();
     const { apiSettings, setApiSettings } = useTileMap();
@@ -35,7 +38,9 @@ export function ApiConfiguration() {
             return;
         }
 
-        const url = localUrl.trim().replace(/\/$/, "") || "https://api.omaproject.com.br/api";
+        const url = isDev
+            ? (localUrl.trim().replace(/\/$/, "") || "https://api.omaproject.com.br/api")
+            : "https://api.omaproject.com.br/api";
 
         setLoading(true);
         setStatus(null);
@@ -64,16 +69,18 @@ export function ApiConfiguration() {
             <h4 className={styles.title}>{t("api_settings")}</h4>
             <div className={styles.divider} />
 
-            <div className={styles.field}>
-                <label className={styles.label}>{t("api_url")}</label>
-                <input
-                    className={styles.input}
-                    type="text"
-                    value={localUrl}
-                    onChange={e => setLocalUrl(e.target.value)}
-                    placeholder="https://api.omaproject.com.br/api"
-                />
-            </div>
+            {isDev && (
+                <div className={styles.field}>
+                    <label className={styles.label}>{t("api_url")}</label>
+                    <input
+                        className={styles.input}
+                        type="text"
+                        value={localUrl}
+                        onChange={e => setLocalUrl(e.target.value)}
+                        placeholder="https://api.omaproject.com.br/api"
+                    />
+                </div>
+            )}
 
             <div className={styles.field}>
                 <label className={styles.label}>{t("api_email")}</label>
