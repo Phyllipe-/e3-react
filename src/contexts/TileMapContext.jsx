@@ -8,6 +8,9 @@ import { getToken } from '../utils/apiService';
 
 const LS_API = "e3_api_settings";
 const LS_MAP_NAME = "e3_map_name";
+const PROD_API_URL = "https://api.omaproject.com.br/api";
+const IS_DEV = window.location.hostname === "localhost" ||
+               window.location.hostname === "127.0.0.1";
 
 function loadApiSettings() {
     try {
@@ -15,10 +18,11 @@ function loadApiSettings() {
         if (saved) {
             const parsed = JSON.parse(saved);
             delete parsed.senha; // never restore password from storage
+            if (!IS_DEV) parsed.url = PROD_API_URL; // ignora URL de dev no localStorage
             return parsed;
         }
     } catch (_) {}
-    return { url: "https://api.omaproject.com.br/api", email: "", conectado: false, nomeUsuario: "" };
+    return { url: PROD_API_URL, email: "", conectado: false, nomeUsuario: "" };
 }
 
 const TileMapContext = createContext();
