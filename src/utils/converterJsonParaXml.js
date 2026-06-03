@@ -1,15 +1,22 @@
+function normalizeTileCode(codigo) {
+    if (codigo && codigo !== "-1" && !String(codigo).includes('.')) {
+        return `${codigo}.0`;
+    }
+    return String(codigo);
+}
+
 export function converterJsonParaXml(mapaJson) {
     const { width, height, tileSize, layers } = mapaJson;
     const VOID_ID = "-1";
 
     const layerNameMapping = {
-        floor: 'floor', 
-        walls: 'walls', 
+        floor: 'floor',
+        walls: 'walls',
         door_and_windows: 'door_and_windows',
-        furniture: 'furniture', 
-        eletronics: 'eletronics', 
+        furniture: 'furniture',
+        eletronics: 'eletronics',
         utensils: 'utensils',
-        interactive_elements: 'interactive_elements', 
+        interactive_elements: 'interactive_elements',
         persons: 'persons'
     };
 
@@ -29,7 +36,7 @@ export function converterJsonParaXml(mapaJson) {
             if (sprite.children && sprite.children.length > 0) {
                 for (const child of sprite.children) {
                     if (child.y < height && child.x < width) {
-                        grids[xmlLayerName][child.y][child.x] = String(child.codigo);
+                        grids[xmlLayerName][child.y][child.x] = normalizeTileCode(child.codigo);
                     }
                 }
             }
