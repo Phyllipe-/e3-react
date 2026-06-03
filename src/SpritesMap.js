@@ -547,18 +547,18 @@ export const spritesMap = [
                     }
                 }
             },
-            { 
-                name: 'Porta Aberta', 
+            {
+                name: 'Porta Aberta',
                 path: '/sprites/door/porta-aberta-01.png',
                 soundPath: '/audios/doors/doorClose.wav',
                 size: [2 ,1],
-                rotation: 0, 
-                visible: true, 
+                rotation: 0,
+                visible: true,
                 translate: 'open_door',
-                anchor_code: '2.0',
+                anchor_code: '4.0',
                 rotations: {
-                    0: { 
-                        path: '/sprites/door/porta-aberta-01.png', 
+                    0: {
+                        path: '/sprites/door/porta-aberta-01.png',
                         anchor_code: '4.0',
                         layout: [
                             ['4.0', '5.0']
@@ -1243,9 +1243,9 @@ export const spritesMap = [
                             ['1.1'],
                         ]
                     },
-                    270: { 
-                        path: '/sprites/eletronics/geladeira-04.png', 
-                        anchor_code: '3.1',
+                    270: {
+                        path: '/sprites/eletronics/geladeira-04.png',
+                        anchor_code: '0.2',
                         layout: [
                             ['0.2', '1.2']
                         ]
