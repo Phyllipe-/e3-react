@@ -41,7 +41,7 @@ export function Menu(){
 
     const [isModal, setModal] = useState(false);
     const [modalTitle, setModalTitle] = useState('');
-    const [fileFormat, setFileFormat] = useState('json');
+    const [fileFormat, setFileFormat] = useState('xml');
     const [option, setOption] = useState('save');
 
     const openModal = (opt) => {
@@ -213,8 +213,7 @@ export function Menu(){
                                 className={styles.selectTile}
                             />
                         </div>
-                        <select onChange={(e) => setFileFormat(e.target.value)} className={styles.selectTile}>
-                            <option value="json">JSON</option>
+                        <select value={fileFormat} onChange={(e) => setFileFormat(e.target.value)} className={styles.selectTile}>
                             <option value="xml">XML</option>
                         </select>
                         {uploadStatus === 'uploading' && (

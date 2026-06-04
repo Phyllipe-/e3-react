@@ -3,7 +3,7 @@
  * Renders the tilemap onto an offscreen canvas and returns a PNG Blob.
  */
 
-const PREVIEW_MAX = 256; // max side in pixels
+const PREVIEW_MAX = 1024; // max side in pixels
 
 /**
  * @param {object}  tilemap        — context tilemap state
