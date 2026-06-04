@@ -22,12 +22,16 @@ export function EditModeLoader() {
         const mode  = params.get('mode');
         const id    = params.get('id');
         const token = params.get('token');
+        const nome  = params.get('nome');
 
         if (mode !== 'edit' || !id || !token) return;
 
         // Persiste o token para que apiService.js o encontre
         localStorage.setItem(LS_TOKEN, token);
         setEditMapId(parseInt(id, 10));
+        // Nome do mapa: usa o nome atual vindo do dashboard; senao deixa em branco.
+        // Evita herdar o nome do ultimo mapa salvo (persistido em localStorage).
+        setMapName(nome || "");
 
         const { url: apiUrl = 'https://api.omaproject.com.br/api' } = (() => {
             try { return JSON.parse(localStorage.getItem(LS_API) || '{}'); }
@@ -44,7 +48,7 @@ export function EditModeLoader() {
                     // JSON
                     const jsonContent = JSON.parse(trimmed);
                     setTilemap(converterJsonParaJson(jsonContent));
-                    if (jsonContent.name || jsonContent.nome_mapa) {
+                    if (!nome && (jsonContent.name || jsonContent.nome_mapa)) {
                         setMapName(jsonContent.name || jsonContent.nome_mapa);
                     }
                 }
