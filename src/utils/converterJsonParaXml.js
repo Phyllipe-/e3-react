@@ -43,11 +43,20 @@ export function converterJsonParaXml(mapaJson) {
         }
     }
 
+    // Ordem canonica das camadas, identica a esperada pelo ENA (BuildMapMatrix).
+    // O ENA roteia camadas pelo nome, mas mantemos esta ordem fixa para que o XML
+    // seja correto na origem e independa da ordem do array de layers de entrada.
+    const CANONICAL_LAYER_ORDER = [
+        'floor', 'walls', 'door_and_windows', 'furniture',
+        'eletronics', 'utensils', 'interactive_elements', 'persons'
+    ];
+
     let layersXmlString = '';
-    for (const layerName in grids) {
+    for (const layerName of CANONICAL_LAYER_ORDER) {
         const grid = grids[layerName];
+        if (!grid) continue;
         const layerDataString = grid.map(row => row.join(',')).join(',\n');
-        
+
         layersXmlString += `
         <layer name="${layerName}" tileset="${layerName}">
             ${layerDataString}
