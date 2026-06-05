@@ -55,14 +55,14 @@ export default function Scene3D({ tilemap }) {
 
     const floorLayer = tilemap.layers.filter(layer => layer.id === 'floor');
 
-    if (floorLayer) {
+    if (floorLayer.length) {
       for (const sprite of floorLayer[0].sprites) {
 
           if (!sprite.visible) continue;
 
           const { x, y, path, size } = sprite;
-          const cols = size?.cols || 1;
-          const rows = size?.rows || 1;
+          const cols = size?.[0] || 1;
+          const rows = size?.[1] || 1;
 
           const material = createMaterial(path);
           const floor = new THREE.Mesh(
@@ -77,21 +77,21 @@ export default function Scene3D({ tilemap }) {
             (y + rows / 2 - 0.5) * tileSize
           );
 
-          floor.rotation.y = sprite.rotation ?? 0;
+          floor.rotation.y = THREE.MathUtils.degToRad(sprite.rotation ?? 0);
 
           scene.add(floor);
       }
     }
 
-    const wallLayer = tilemap.layers.filter(layer => layer.id === 'wall');
+    const wallLayer = tilemap.layers.filter(layer => layer.id === 'walls');
 
-    if (wallLayer) {
+    if (wallLayer.length) {
       for (const sprite of wallLayer[0].sprites) {
         if (!sprite.visible) continue;
 
         const { x, y, path, size, direction, align, rotation } = sprite;
-        const cols = size?.cols || 1;
-        const rows = size?.rows || 1;
+        const cols = size?.[0] || 1;
+        const rows = size?.[1] || 1;
 
         const material = createMaterial(path);
 
@@ -124,7 +124,7 @@ export default function Scene3D({ tilemap }) {
           posZ + (rows / 2 - 0.5) * tileSize
         );
 
-        wall.rotation.y = rotation ?? 0;
+        wall.rotation.y = THREE.MathUtils.degToRad(rotation ?? 0);
 
         scene.add(wall);
       }
