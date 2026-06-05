@@ -133,9 +133,17 @@ export default function Scene3D({ tilemap }) {
     // ---- Camadas com MODELOS 3D (.glb exportados do ENA) ----
     // Interativos: mapeados pelo translate do sprite. Pessoas: modelo "Kid".
     const TRANSLATE_TO_MODEL = {
+      // Interativos
       dog: 'Dog', frog: 'Frog', bug: 'Insect', dryer: 'HairDryer', radio: 'Radio',
       blender: 'Blender', alarm: 'AlarmClock', bird: 'Bird', kettle: 'TeaKettle',
       mixer: 'FoodMixer', printer: 'Printer', fan: 'Fan', cat: 'Cat', phone: 'Cellphone', baby: 'Kid',
+      // Eletrodomésticos
+      computer: 'Computer', copier: 'CopyMachine', stove: 'Stove', refrigerator: 'Fridge',
+      washing_machine: 'WashingMachine', microwave: 'Microwave', television: 'TV',
+      // Móveis
+      double_bed: 'CouplesBed', single_bed: 'SinglesBed', cabinet: 'IronCloset', dresser: 'Bureau',
+      table: 'Table', dining_table: 'DiningTable', armchair: 'Armchair', chair: 'Chair',
+      nightstand: 'BedTable', shelf: 'Shelf', wardrobe: 'Wardrobe', sofa: 'Sofa',
     };
 
     function addModel(file, x, y, cols, rows, rotationDeg) {
@@ -160,7 +168,7 @@ export default function Scene3D({ tilemap }) {
       }, undefined, (err) => console.warn('[3D] falha ao carregar modelo', file, err));
     }
 
-    const modelLayers = ['interactive_elements', 'persons'];
+    const modelLayers = ['interactive_elements', 'persons', 'eletronics', 'furniture'];
     for (const layerId of modelLayers) {
       const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
       if (!objLayer.length) continue;
@@ -176,7 +184,7 @@ export default function Scene3D({ tilemap }) {
 
     // ---- Demais camadas (portas/janelas, móveis, eletrônicos, utensílios) ----
     // como decalques horizontais deitados no piso (ainda sem modelo 3D).
-    const decalLayers = ['door_and_windows', 'furniture', 'eletronics', 'utensils'];
+    const decalLayers = ['door_and_windows', 'utensils'];
     for (const layerId of decalLayers) {
       const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
       if (!objLayer.length) continue;
