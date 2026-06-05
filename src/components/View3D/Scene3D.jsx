@@ -144,14 +144,21 @@ export default function Scene3D({ tilemap }) {
       double_bed: 'CouplesBed', single_bed: 'SinglesBed', cabinet: 'IronCloset', dresser: 'Bureau',
       table: 'Table', dining_table: 'DiningTable', armchair: 'Armchair', chair: 'Chair',
       nightstand: 'BedTable', shelf: 'Shelf', wardrobe: 'Wardrobe', sofa: 'Sofa',
+      // Portas e janelas
+      locked_door: 'LockedDoor', closed_door: 'ClosedDoor', open_door: 'OpenDoor',
+      steel_window: 'GlassWindow', wooden_window: 'WoodenWindow',
+      // Utensílios
+      cone: 'Cone', lamp: 'Lamp', flower: 'Plant', trash: 'TrashCan', sink: 'Sink',
+      piano: 'Piano', toilet: 'Toilet', frame: 'Painting', guitar: 'Guitar',
     };
 
     function addModel(file, x, y, cols, rows, rotationDeg) {
       gltfLoader.load(`/models/${file}.glb`, (gltf) => {
         const model = gltf.scene;
         // Escala nativa do prefab (ENA autora os modelos para 1 tile = 1 unidade).
-        // Rotação negada por causa do handedness (Unity left-handed -> glTF right-handed).
-        model.rotation.y = -THREE.MathUtils.degToRad(rotationDeg || 0);
+        // Rotação: negada pelo handedness (Unity->glTF) + 180° de offset de base
+        // (sem isso o objeto fica de costas, ex.: sofá virado para a parede).
+        model.rotation.y = Math.PI - THREE.MathUtils.degToRad(rotationDeg || 0);
 
         // Centraliza no tile e apoia a base no piso, sem reescalar.
         const box = new THREE.Box3().setFromObject(model);
@@ -164,7 +171,8 @@ export default function Scene3D({ tilemap }) {
       }, undefined, (err) => console.warn('[3D] falha ao carregar modelo', file, err));
     }
 
-    const modelLayers = ['interactive_elements', 'persons', 'eletronics', 'furniture'];
+    // Todas as camadas de objeto agora usam modelos 3D (.glb do ENA).
+    const modelLayers = ['interactive_elements', 'persons', 'eletronics', 'furniture', 'door_and_windows', 'utensils'];
     for (const layerId of modelLayers) {
       const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
       if (!objLayer.length) continue;
@@ -175,44 +183,6 @@ export default function Scene3D({ tilemap }) {
         const file = layerId === 'persons' ? 'Kid' : TRANSLATE_TO_MODEL[sprite.translate];
         if (!file) continue;
         addModel(file, sprite.x, sprite.y, cols, rows, sprite.rotation);
-      }
-    }
-
-    // ---- Demais camadas (portas/janelas, móveis, eletrônicos, utensílios) ----
-    // como decalques horizontais deitados no piso (ainda sem modelo 3D).
-    const decalLayers = ['door_and_windows', 'utensils'];
-    for (const layerId of decalLayers) {
-      const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
-      if (!objLayer.length) continue;
-
-      for (const sprite of objLayer[0].sprites) {
-        if (sprite.visible === false) continue;
-
-        const { x, y, path, size } = sprite;
-        const cols = size?.[0] || 1;
-        const rows = size?.[1] || 1;
-
-        const texture = textureLoader.load(path);
-        texture.colorSpace = THREE.SRGBColorSpace;
-
-        const material = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          alphaTest: 0.5,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-        });
-
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(tileSize * cols, tileSize * rows), material);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.rotation.z = THREE.MathUtils.degToRad(sprite.rotation ?? 0);
-        mesh.position.set(
-          (x + cols / 2 - 0.5) * tileSize,
-          floorHeight + 0.02,
-          (y + rows / 2 - 0.5) * tileSize
-        );
-
-        scene.add(mesh);
       }
     }
 
