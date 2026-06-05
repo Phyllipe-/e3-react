@@ -152,7 +152,7 @@ export default function Scene3D({ tilemap }) {
       piano: 'Piano', toilet: 'Toilet', frame: 'Painting', guitar: 'Guitar',
     };
 
-    function addModel(file, x, y, cols, rows, rotationDeg) {
+    function addModel(file, x, y, cols, rows, rotationDeg, fitWidthTiles) {
       gltfLoader.load(`/models/${file}.glb`, (gltf) => {
         const model = gltf.scene;
         // Escala nativa do prefab (ENA autora os modelos para 1 tile = 1 unidade).
@@ -160,7 +160,16 @@ export default function Scene3D({ tilemap }) {
         // (sem isso o objeto fica de costas, ex.: sofá virado para a parede).
         model.rotation.y = Math.PI - THREE.MathUtils.degToRad(rotationDeg || 0);
 
-        // Centraliza no tile e apoia a base no piso, sem reescalar.
+        // Algumas categorias (portas/janelas) têm escala nativa muito maior;
+        // ajusta a largura horizontal ao número de tiles informado.
+        if (fitWidthTiles) {
+          const b = new THREE.Box3().setFromObject(model);
+          const d = b.getSize(new THREE.Vector3());
+          const maxXZ = Math.max(d.x, d.z) || 1;
+          model.scale.setScalar((fitWidthTiles * tileSize) / maxXZ);
+        }
+
+        // Centraliza no tile e apoia a base no piso.
         const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         model.position.x += (x + cols / 2 - 0.5) * tileSize - center.x;
@@ -182,7 +191,9 @@ export default function Scene3D({ tilemap }) {
         const rows = sprite.size?.[1] || 1;
         const file = layerId === 'persons' ? 'Kid' : TRANSLATE_TO_MODEL[sprite.translate];
         if (!file) continue;
-        addModel(file, sprite.x, sprite.y, cols, rows, sprite.rotation);
+        // Portas/janelas têm escala nativa exagerada: ajusta a largura ao tile.
+        const fit = layerId === 'door_and_windows' ? cols : null;
+        addModel(file, sprite.x, sprite.y, cols, rows, sprite.rotation, fit);
       }
     }
 
