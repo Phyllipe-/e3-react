@@ -149,16 +149,12 @@ export default function Scene3D({ tilemap }) {
     function addModel(file, x, y, cols, rows, rotationDeg) {
       gltfLoader.load(`/models/${file}.glb`, (gltf) => {
         const model = gltf.scene;
-        model.rotation.y = THREE.MathUtils.degToRad(rotationDeg || 0);
+        // Escala nativa do prefab (ENA autora os modelos para 1 tile = 1 unidade).
+        // Rotação negada por causa do handedness (Unity left-handed -> glTF right-handed).
+        model.rotation.y = -THREE.MathUtils.degToRad(rotationDeg || 0);
 
-        // Escala para caber no footprint do objeto (em tiles)
-        let box = new THREE.Box3().setFromObject(model);
-        const dim = box.getSize(new THREE.Vector3());
-        const maxXZ = Math.max(dim.x, dim.z) || 1;
-        model.scale.setScalar((tileSize * Math.max(cols, rows) * 0.9) / maxXZ);
-
-        // Centraliza no tile e apoia a base no piso
-        box = new THREE.Box3().setFromObject(model);
+        // Centraliza no tile e apoia a base no piso, sem reescalar.
+        const box = new THREE.Box3().setFromObject(model);
         const center = box.getCenter(new THREE.Vector3());
         model.position.x += (x + cols / 2 - 0.5) * tileSize - center.x;
         model.position.z += (y + rows / 2 - 0.5) * tileSize - center.z;
