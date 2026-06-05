@@ -130,12 +130,54 @@ export default function Scene3D({ tilemap }) {
       }
     }
 
-    // Demais camadas (portas/janelas, móveis, eletrônicos, utensílios, interativos, pessoas)
-    // como decalques horizontais deitados no piso (sprite top-down), logo acima do chão.
-    // Ficam estáveis: não giram quando a câmera orbita.
-    const objectLayers = ['door_and_windows', 'furniture', 'eletronics', 'utensils', 'interactive_elements', 'persons'];
+    // ---- Camadas com MODELOS 3D (.glb exportados do ENA) ----
+    // Interativos: mapeados pelo translate do sprite. Pessoas: modelo "Kid".
+    const TRANSLATE_TO_MODEL = {
+      dog: 'Dog', frog: 'Frog', bug: 'Insect', dryer: 'HairDryer', radio: 'Radio',
+      blender: 'Blender', alarm: 'AlarmClock', bird: 'Bird', kettle: 'TeaKettle',
+      mixer: 'FoodMixer', printer: 'Printer', fan: 'Fan', cat: 'Cat', phone: 'Cellphone', baby: 'Kid',
+    };
 
-    for (const layerId of objectLayers) {
+    function addModel(file, x, y, cols, rows, rotationDeg) {
+      gltfLoader.load(`/models/${file}.glb`, (gltf) => {
+        const model = gltf.scene;
+        model.rotation.y = THREE.MathUtils.degToRad(rotationDeg || 0);
+
+        // Escala para caber no footprint do objeto (em tiles)
+        let box = new THREE.Box3().setFromObject(model);
+        const dim = box.getSize(new THREE.Vector3());
+        const maxXZ = Math.max(dim.x, dim.z) || 1;
+        model.scale.setScalar((tileSize * Math.max(cols, rows) * 0.9) / maxXZ);
+
+        // Centraliza no tile e apoia a base no piso
+        box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.x += (x + cols / 2 - 0.5) * tileSize - center.x;
+        model.position.z += (y + rows / 2 - 0.5) * tileSize - center.z;
+        model.position.y += floorHeight - box.min.y;
+
+        scene.add(model);
+      }, undefined, (err) => console.warn('[3D] falha ao carregar modelo', file, err));
+    }
+
+    const modelLayers = ['interactive_elements', 'persons'];
+    for (const layerId of modelLayers) {
+      const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
+      if (!objLayer.length) continue;
+      for (const sprite of objLayer[0].sprites) {
+        if (sprite.visible === false) continue;
+        const cols = sprite.size?.[0] || 1;
+        const rows = sprite.size?.[1] || 1;
+        const file = layerId === 'persons' ? 'Kid' : TRANSLATE_TO_MODEL[sprite.translate];
+        if (!file) continue;
+        addModel(file, sprite.x, sprite.y, cols, rows, sprite.rotation);
+      }
+    }
+
+    // ---- Demais camadas (portas/janelas, móveis, eletrônicos, utensílios) ----
+    // como decalques horizontais deitados no piso (ainda sem modelo 3D).
+    const decalLayers = ['door_and_windows', 'furniture', 'eletronics', 'utensils'];
+    for (const layerId of decalLayers) {
       const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
       if (!objLayer.length) continue;
 
@@ -158,11 +200,8 @@ export default function Scene3D({ tilemap }) {
         });
 
         const mesh = new THREE.Mesh(new THREE.PlaneGeometry(tileSize * cols, tileSize * rows), material);
-
-        // Deita o plano no piso e aplica a rotação do objeto
         mesh.rotation.x = -Math.PI / 2;
         mesh.rotation.z = THREE.MathUtils.degToRad(sprite.rotation ?? 0);
-
         mesh.position.set(
           (x + cols / 2 - 0.5) * tileSize,
           floorHeight + 0.02,
