@@ -32,7 +32,7 @@ export function View3D() {
 
   return (
     <>
-      <Modal isOpen={isModal3d} buttons={false} onClose={() => setModal3d(false)} showButtonClose={true}>
+      <Modal active={isModal3d} buttons={false} setActive={setModal3d} showButtonClose={true}>
         {isModal3d && (
           <Suspense fallback={<div className={styles.container} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Carregando 3D…</div>}>
             <Scene3D tilemap={tilemap} />
