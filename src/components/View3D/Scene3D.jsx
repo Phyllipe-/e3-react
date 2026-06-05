@@ -130,6 +130,47 @@ export default function Scene3D({ tilemap }) {
       }
     }
 
+    // Demais camadas (portas/janelas, móveis, eletrônicos, utensílios, interativos, pessoas)
+    // como billboards verticais voltados para a câmera, usando a textura do próprio sprite.
+    const billboards = [];
+    const objectLayers = ['door_and_windows', 'furniture', 'eletronics', 'utensils', 'interactive_elements', 'persons'];
+
+    for (const layerId of objectLayers) {
+      const objLayer = tilemap.layers.filter(layer => layer.id === layerId);
+      if (!objLayer.length) continue;
+
+      for (const sprite of objLayer[0].sprites) {
+        if (sprite.visible === false) continue;
+
+        const { x, y, path, size } = sprite;
+        const cols = size?.[0] || 1;
+        const rows = size?.[1] || 1;
+
+        const texture = textureLoader.load(path);
+        texture.colorSpace = THREE.SRGBColorSpace;
+
+        const material = new THREE.MeshBasicMaterial({
+          map: texture,
+          transparent: true,
+          alphaTest: 0.5,
+          side: THREE.DoubleSide,
+        });
+
+        const planeW = tileSize * cols;
+        const planeH = tileSize * rows;
+        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(planeW, planeH), material);
+
+        mesh.position.set(
+          (x + cols / 2 - 0.5) * tileSize,
+          floorHeight + planeH / 2,
+          (y + rows / 2 - 0.5) * tileSize
+        );
+
+        billboards.push(mesh);
+        scene.add(mesh);
+      }
+    }
+
     camera.position.set(2.5, 5, 7);
     camera.lookAt(new THREE.Vector3(2.5, 0, 2.5));
 
@@ -145,6 +186,8 @@ export default function Scene3D({ tilemap }) {
     const animate = () => {
       frameId = requestAnimationFrame(animate);
       controls.update();
+      // Billboards sempre de frente para a câmera
+      for (const b of billboards) b.quaternion.copy(camera.quaternion);
       renderer.render(scene, camera);
     };
     animate();

@@ -40,8 +40,8 @@
 }
 
 .container{
-    width: 1000px;
-    height: 600px;
+    width: min(1280px, 88vw);
+    height: 80vh;
     background-color: gray;
     margin: 0px;
 }
